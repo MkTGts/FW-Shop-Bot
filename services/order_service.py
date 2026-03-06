@@ -125,3 +125,21 @@ async def get_user_orders(session: AsyncSession, user_id: int) -> List[Order]:
     )
     result = await session.execute(stmt)
     return list(result.scalars().all())
+
+
+async def get_user_completed_stats(
+    session: AsyncSession, user_id: int
+) -> Tuple[int, int]:
+    """Возвращает (количество выполненных заказов, общая сумма выполненных заказов)."""
+    from sqlalchemy import func
+
+    stmt = (
+        select(func.count(Order.id).label("count"), func.sum(Order.total_price).label("total"))
+        .where(Order.user_id == user_id)
+        .where(Order.status == OrderStatus.COMPLETED)
+    )
+    result = await session.execute(stmt)
+    row = result.one()
+    count = row.count or 0
+    total = row.total or 0
+    return count, int(total)

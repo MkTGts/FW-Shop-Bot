@@ -78,11 +78,23 @@ async def user_order_detail(callback: CallbackQuery):
             return
         from sqlalchemy import select
         from database.models.user import User
+        from services.order_service import get_user_completed_stats
 
         res = await session.execute(select(User).where(User.id == order.user_id))
         order_user = res.scalar_one()
+        completed_count, completed_total = await get_user_completed_stats(
+            session, order_user.id
+        )
 
-    text = format_order_short(order, order_user) + "\n\n" + format_order_items(items)
+    text = (
+        format_order_short(
+            order, order_user,
+            completed_orders_count=completed_count,
+            completed_orders_total=completed_total,
+        )
+        + "\n\n"
+        + format_order_items(items)
+    )
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
 

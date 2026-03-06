@@ -11,6 +11,7 @@ from services.cart_service import get_cart_with_products, calculate_cart_total
 from services.order_service import (
     create_order_from_cart,
     get_order_with_items,
+    get_user_completed_stats,
     set_payment_screenshot,
 )
 from services.user_service import get_user_by_telegram_id
@@ -190,6 +191,9 @@ async def order_confirm(callback: CallbackQuery, state: FSMContext):
                 if order_obj.delivery_type == DeliveryType.DELIVERY
                 else 0
             )
+            completed_count, completed_total = await get_user_completed_stats(
+                session, user.id
+            )
             await notify_new_order(
                 bot=callback.bot,
                 admin_ids=settings.admin_ids,
@@ -198,6 +202,8 @@ async def order_confirm(callback: CallbackQuery, state: FSMContext):
                 items=items,
                 delivery_cost=delivery_cost,
                 products_total=products_total,
+                completed_orders_count=completed_count,
+                completed_orders_total=completed_total,
             )
 
     await state.set_state(OrderStates.wait_payment)
@@ -239,6 +245,9 @@ async def order_payment_screenshot(message: Message, state: FSMContext):
 
         res = await session.execute(select(User).where(User.id == order.user_id))
         user = res.scalar_one()
+        completed_count, completed_total = await get_user_completed_stats(
+            session, user.id
+        )
 
         order_for_notify = updated_order or order
         await notify_payment(
@@ -247,6 +256,8 @@ async def order_payment_screenshot(message: Message, state: FSMContext):
             order=order_for_notify,
             user=user,
             items=items,
+            completed_orders_count=completed_count,
+            completed_orders_total=completed_total,
         )
 
     await state.clear()

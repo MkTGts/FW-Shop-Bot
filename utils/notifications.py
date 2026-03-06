@@ -8,7 +8,12 @@ from database.models.product import Product
 from database.models.user import User
 
 
-def format_order_short(order: Order, user: User) -> str:
+def format_order_short(
+    order: Order,
+    user: User,
+    completed_orders_count: int | None = None,
+    completed_orders_total: int | None = None,
+) -> str:
     status_map = {
         "UNPAID": "НЕ ОПЛАЧЕН",
         "PAID": "ОПЛАЧЕН",
@@ -20,10 +25,16 @@ def format_order_short(order: Order, user: User) -> str:
     text = (
         f"Заказ #{order.id}\n"
         f"Статус: {status}\n"
-        f"Пользователь: {user.name} (tg_id={user.telegram_id})\n"
-        f"Тип доставки: {delivery}\n"
-        f"Сумма: {order.total_price} ₽\n"
+        f"Пользователь: {user.name}\n"
+        f"ID: {user.id} | TG: {user.telegram_id}\n"
+        f"Телефон: {user.phone}\n"
     )
+    if completed_orders_count is not None and completed_orders_total is not None:
+        text += (
+            f"Выполнено заказов: {completed_orders_count} "
+            f"на сумму {completed_orders_total} ₽\n"
+        )
+    text += f"Тип доставки: {delivery}\n" f"Сумма: {order.total_price} ₽\n"
     if order.address:
         text += f"Адрес: {order.address}\n"
     return text
@@ -49,8 +60,14 @@ async def notify_new_order(
     items: List[Tuple[OrderItem, Product]],
     delivery_cost: int,
     products_total: int,
+    completed_orders_count: int | None = None,
+    completed_orders_total: int | None = None,
 ) -> None:
-    base = format_order_short(order, user)
+    base = format_order_short(
+        order, user,
+        completed_orders_count=completed_orders_count,
+        completed_orders_total=completed_orders_total,
+    )
     items_text = format_order_items(items)
     text = (
         "🆕 НОВЫЙ ЗАКАЗ\n\n"
@@ -84,8 +101,14 @@ async def notify_payment(
     order: Order,
     user: User,
     items: List[Tuple[OrderItem, Product]],
+    completed_orders_count: int | None = None,
+    completed_orders_total: int | None = None,
 ) -> None:
-    base = format_order_short(order, user)
+    base = format_order_short(
+        order, user,
+        completed_orders_count=completed_orders_count,
+        completed_orders_total=completed_orders_total,
+    )
     items_text = format_order_items(items)
     text = (
         "💸 ПОЛУЧЕН СКРИНШОТ ОПЛАТЫ\n\n"

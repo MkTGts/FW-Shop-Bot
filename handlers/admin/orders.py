@@ -1,5 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
+from sqlalchemy import select
 
 from database.db import async_session_factory
 from database.models.order import Order as OrderModel, OrderStatus
@@ -15,7 +16,7 @@ router = Router(name="admin_orders")
 
 async def _refresh_order_detail_message(callback: CallbackQuery, order_id: int) -> bool:
     """Обновляет сообщение с деталями заказа после смены статуса."""
-    from sqlalchemy import select
+    from services.order_service import get_user_completed_stats
 
     async with async_session_factory() as session:
         result = await get_order_with_items(session, order_id)
@@ -24,8 +25,19 @@ async def _refresh_order_detail_message(callback: CallbackQuery, order_id: int) 
         order, items = result
         res = await session.execute(select(User).where(User.id == order.user_id))
         user = res.scalar_one()
+        completed_count, completed_total = await get_user_completed_stats(
+            session, user.id
+        )
 
-    text = format_order_short(order, user) + "\n\n" + format_order_items(items)
+    text = (
+        format_order_short(
+            order, user,
+            completed_orders_count=completed_count,
+            completed_orders_total=completed_total,
+        )
+        + "\n\n"
+        + format_order_items(items)
+    )
     kb = admin_order_item_kb(order.id, order.status.value).as_markup()
     try:
         await callback.message.edit_text(text, reply_markup=kb)
@@ -197,19 +209,29 @@ async def admin_order_detail(callback: CallbackQuery):
     _, oid_str = callback.data.split(":", 1)
     order_id = int(oid_str)
 
+    from services.order_service import get_user_completed_stats
+
     async with async_session_factory() as session:
         result = await get_order_with_items(session, order_id)
         if not result:
             await callback.message.answer("Заказ не найден.")
             return
         order, items = result
-        from sqlalchemy import select
-        from database.models.user import User
-
         res = await session.execute(select(User).where(User.id == order.user_id))
         user = res.scalar_one()
+        completed_count, completed_total = await get_user_completed_stats(
+            session, user.id
+        )
 
-    text = format_order_short(order, user) + "\n\n" + format_order_items(items)
+    text = (
+        format_order_short(
+            order, user,
+            completed_orders_count=completed_count,
+            completed_orders_total=completed_total,
+        )
+        + "\n\n"
+        + format_order_items(items)
+    )
     kb = admin_order_item_kb(order.id, order.status.value).as_markup()
     await callback.message.answer(text, reply_markup=kb)
 
