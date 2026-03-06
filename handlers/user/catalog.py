@@ -28,11 +28,19 @@ async def back_to_catalog_cb(callback: CallbackQuery):
     await callback.answer()
     async with async_session_factory() as session:
         products = await get_all_products(session)
-    if not products:
-        await callback.message.edit_text("Каталог пока пуст. Загляните позже 💐")
-        return
-    kb = catalog_inline_kb(products).as_markup()
-    await callback.message.edit_text("Выберите букет из каталога:", reply_markup=kb)
+
+    kb = catalog_inline_kb(products).as_markup() if products else None
+    text = "Выберите букет из каталога:" if products else "Каталог пока пуст. Загляните позже 💐"
+
+    if callback.message.photo:
+        await callback.message.delete()
+        await callback.message.answer(text, reply_markup=kb)
+    else:
+        try:
+            await callback.message.edit_text(text, reply_markup=kb)
+        except Exception:
+            await callback.message.delete()
+            await callback.message.answer(text, reply_markup=kb)
 
 
 @router.callback_query(F.data.startswith("product:"))

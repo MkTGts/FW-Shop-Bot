@@ -11,6 +11,7 @@ load_dotenv()
 class Settings:
     bot_token: str
     admin_ids: List[int]
+    payment_phone: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -29,7 +30,9 @@ class Settings:
             except ValueError:
                 continue
 
-        return cls(bot_token=token, admin_ids=admin_ids)
+        payment_phone = os.getenv("PAYMENT_PHONE", "+79001234567")
+
+        return cls(bot_token=token, admin_ids=admin_ids, payment_phone=payment_phone)
 
 
 settings = Settings.from_env()

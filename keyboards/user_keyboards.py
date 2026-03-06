@@ -5,6 +5,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 def main_menu_kb(is_admin: bool = False) -> ReplyKeyboardMarkup:
     buttons = [
         [KeyboardButton(text="Каталог"), KeyboardButton(text="Корзина")],
+        [KeyboardButton(text="Мои заказы")],
     ]
     if is_admin:
         buttons.append([KeyboardButton(text="Админ")])

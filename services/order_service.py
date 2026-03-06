@@ -78,12 +78,12 @@ async def set_order_status(
 async def set_payment_screenshot(
     session: AsyncSession, order_id: int, file_id: str
 ) -> Optional[Order]:
+    """Сохраняет скриншот оплаты. Статус меняет только админ через «Подтвердить оплату»."""
     result = await session.execute(select(Order).where(Order.id == order_id))
     order = result.scalar_one_or_none()
     if not order:
         return None
     order.payment_screenshot = file_id
-    order.status = OrderStatus.PAID
     await session.commit()
     await session.refresh(order)
     return order

@@ -132,6 +132,38 @@ async def admin_order_detail(callback: CallbackQuery):
     await callback.message.answer(text, reply_markup=kb)
 
 
+@router.callback_query(F.data.startswith("admin_confirm_payment:"))
+async def admin_confirm_payment(callback: CallbackQuery):
+    """Подтверждение оплаты по скриншоту от пользователя."""
+    if not is_admin(callback.from_user.id):
+        await callback.answer("Нет прав", show_alert=True)
+        return
+    _, oid_str = callback.data.split(":", 1)
+    order_id = int(oid_str)
+    async with async_session_factory() as session:
+        order = await set_order_status(session, order_id, OrderStatus.PAID)
+    if order:
+        await callback.answer("Оплата подтверждена ✅", show_alert=True)
+        suffix = "\n\n✅ ОПЛАТА ПОДТВЕРЖДЕНА"
+        try:
+            caption = callback.message.caption or ""
+            await callback.message.edit_caption(
+                caption=caption + suffix,
+                reply_markup=None,
+            )
+        except Exception:
+            try:
+                text = callback.message.text or ""
+                await callback.message.edit_text(
+                    text=text + suffix,
+                    reply_markup=None,
+                )
+            except Exception:
+                pass
+    else:
+        await callback.answer("Заказ не найден", show_alert=True)
+
+
 @router.callback_query(F.data.startswith("admin_order_mark_paid:"))
 async def admin_order_mark_paid(callback: CallbackQuery):
     if not is_admin(callback.from_user.id):

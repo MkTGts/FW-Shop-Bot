@@ -12,6 +12,7 @@ from handlers.user import start as user_start
 from handlers.user import catalog as user_catalog
 from handlers.user import cart as user_cart
 from handlers.user import order as user_order
+from handlers.user import my_orders as user_my_orders
 from handlers.admin import (
     admin_menu,
     products as admin_products,
@@ -45,6 +46,7 @@ async def main():
     dp.include_router(user_catalog.router)
     dp.include_router(user_cart.router)
     dp.include_router(user_order.router)
+    dp.include_router(user_my_orders.router)
 
     await dp.start_polling(bot)
 

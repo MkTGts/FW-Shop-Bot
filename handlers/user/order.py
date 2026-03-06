@@ -206,8 +206,7 @@ async def order_confirm(callback: CallbackQuery, state: FSMContext):
     payment_text = (
         f"Ваш заказ #{order.id} успешно создан!\n"
         f"Сумма к оплате: {order.total_price} ₽\n\n"
-        "Пожалуйста, выполните перевод на следующий номер телефона:\n"
-        "<вставьте номер телефона для оплаты здесь>\n\n"
+        f"Переведите деньги на номер: {settings.payment_phone}\n\n"
         "После оплаты отправьте сюда скриншот подтверждения перевода."
     )
     await callback.message.answer(payment_text)

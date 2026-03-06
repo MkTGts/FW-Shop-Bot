@@ -65,6 +65,17 @@ async def notify_new_order(
             continue
 
 
+def payment_confirm_kb(order_id: int):
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="✅ Подтвердить оплату",
+        callback_data=f"admin_confirm_payment:{order_id}",
+    )
+    return kb.as_markup()
+
+
 async def notify_payment(
     bot: Bot,
     admin_ids: List[int],
@@ -79,6 +90,7 @@ async def notify_payment(
         f"{base}\n"
         f"Товары:\n{items_text}\n"
     )
+    kb = payment_confirm_kb(order.id)
     for admin_id in admin_ids:
         try:
             if order.payment_screenshot:
@@ -86,8 +98,11 @@ async def notify_payment(
                     chat_id=admin_id,
                     photo=order.payment_screenshot,
                     caption=text,
+                    reply_markup=kb,
                 )
             else:
-                await bot.send_message(chat_id=admin_id, text=text)
+                await bot.send_message(
+                    chat_id=admin_id, text=text, reply_markup=kb
+                )
         except Exception:
             continue
