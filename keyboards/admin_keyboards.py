@@ -27,24 +27,38 @@ def admin_products_menu_kb() -> InlineKeyboardBuilder:
 def admin_orders_menu_kb() -> InlineKeyboardBuilder:
     kb = InlineKeyboardBuilder()
     kb.button(text="Все заказы", callback_data="admin_orders_all")
-    kb.button(text="Оплаченные", callback_data="admin_orders_paid")
     kb.button(text="Неоплаченные", callback_data="admin_orders_unpaid")
+    kb.button(text="Оплаченные", callback_data="admin_orders_paid")
+    kb.button(text="Отправленные", callback_data="admin_orders_sent")
+    kb.button(text="Выполненные", callback_data="admin_orders_completed")
     kb.button(text="🔙 В админ-меню", callback_data="admin_back_main")
     kb.adjust(1)
     return kb
 
 
-def admin_order_item_kb(order_id: int, is_paid: bool) -> InlineKeyboardBuilder:
+def admin_order_item_kb(order_id: int, status: str) -> InlineKeyboardBuilder:
+    """Клавиатура для деталей заказа в зависимости от статуса."""
+    from database.models.order import OrderStatus
+
     kb = InlineKeyboardBuilder()
-    if is_paid:
+    if status == OrderStatus.UNPAID.value:
         kb.button(
-            text="Отметить неоплаченным",
+            text="✅ Отметить оплаченным",
+            callback_data=f"admin_order_mark_paid:{order_id}",
+        )
+    elif status == OrderStatus.PAID.value:
+        kb.button(
+            text="↩ Отметить неоплаченным",
             callback_data=f"admin_order_mark_unpaid:{order_id}",
         )
-    else:
         kb.button(
-            text="Отметить оплаченным",
-            callback_data=f"admin_order_mark_paid:{order_id}",
+            text="📦 Отправить",
+            callback_data=f"admin_order_mark_sent:{order_id}",
+        )
+    elif status == OrderStatus.SENT.value:
+        kb.button(
+            text="✅ Выполнен",
+            callback_data=f"admin_order_mark_completed:{order_id}",
         )
     kb.button(text="🗑 Удалить заказ", callback_data=f"admin_order_delete:{order_id}")
     kb.adjust(1)

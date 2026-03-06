@@ -14,7 +14,13 @@ router = Router(name="user_my_orders")
 
 
 def _format_order_line(order) -> str:
-    status = "✅ Оплачен" if order.status == OrderStatus.PAID else "⏳ Неоплачен"
+    status_labels = {
+        OrderStatus.UNPAID: "⏳ Неоплачен",
+        OrderStatus.PAID: "✅ Оплачен",
+        OrderStatus.SENT: "📦 Отправлен",
+        OrderStatus.COMPLETED: "✅ Выполнен",
+    }
+    status = status_labels.get(order.status, order.status.value)
     delivery = "Самовывоз" if order.delivery_type.value == "pickup" else "Доставка"
     return (
         f"Заказ #{order.id} | {status}\n"

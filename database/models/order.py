@@ -10,6 +10,8 @@ from database.db import Base
 class OrderStatus(str, PyEnum):
     UNPAID = "UNPAID"
     PAID = "PAID"
+    SENT = "SENT"  # Отправлен
+    COMPLETED = "COMPLETED"  # Выполнен
 
 
 class DeliveryType(str, PyEnum):

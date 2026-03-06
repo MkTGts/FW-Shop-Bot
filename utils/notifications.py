@@ -12,6 +12,8 @@ def format_order_short(order: Order, user: User) -> str:
     status_map = {
         "UNPAID": "НЕ ОПЛАЧЕН",
         "PAID": "ОПЛАЧЕН",
+        "SENT": "ОТПРАВЛЕН",
+        "COMPLETED": "ВЫПОЛНЕН",
     }
     status = status_map.get(order.status.value, order.status.value)
     delivery = "Самовывоз" if order.delivery_type.value == "pickup" else "Доставка"
